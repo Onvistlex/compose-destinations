@@ -47,6 +47,35 @@ class DestinationMappingUtils (
             }
         }
 
+        // KSP 2.3+ with duplicate core versions on classpath (e.g. animations-core:1.x pulling
+        // core:1.x alongside core:2.x) produces KSErrorTypeClassDeclaration for known types.
+        // Fall back to name-based matching when the type can't be resolved normally.
+        if (ksStyleType.isError) {
+            val errorName = ksStyleType.declaration.simpleName.asString()
+            return when {
+                errorName.contains("Default") ->
+                    DestinationStyleType.Default
+                errorName.contains("BottomSheet") ->
+                    DestinationStyleType.BottomSheet
+                errorName.contains("Dialog") ->
+                    DestinationStyleType.Dialog(
+                        dialogStyleDecl.toImportable()
+                            ?: Importable("Dialog", "$CORE_PACKAGE_NAME.spec.DestinationStyle.Dialog")
+                    )
+                errorName.contains("Animated") -> {
+                    val importable = animatedStyleDecl?.toImportable()
+                        ?: Importable("Animated", "$CORE_PACKAGE_NAME.spec.DestinationStyle.Animated")
+                    DestinationStyleType.Animated(importable, emptyList())
+                }
+                else -> throw IllegalDestinationsSetup(
+                    "Style '$errorName' in $locationError is an unresolvable error type. " +
+                    "This is likely caused by having multiple versions of compose-destinations core on the classpath " +
+                    "(e.g. animations-core:1.x pulling core:1.x alongside core:2.x). " +
+                    "Exclude 'io.github.raamcosta.compose-destinations:core' from your animations-core dependency."
+                )
+            }
+        }
+
         if (defaultStyle.isAssignableFrom(ksStyleType)) {
             return DestinationStyleType.Default
         }
