@@ -47,29 +47,29 @@ class DestinationMappingUtils (
             }
         }
 
-        if (defaultStyle.isAssignableFrom(ksStyleType)) {
+        if (defaultStyleDecl.asType(emptyList()).isAssignableFrom(ksStyleType)) {
             return DestinationStyleType.Default
         }
 
-        if (bottomSheetStyle != null && bottomSheetStyle!!.isAssignableFrom(ksStyleType)) {
+        if (bottomSheetStyleDecl != null && bottomSheetStyleDecl!!.asType(emptyList()).isAssignableFrom(ksStyleType)) {
             return DestinationStyleType.BottomSheet
         }
 
-        // Check known styles before resolving importable — in KSP 2.3+ findActualClassDeclaration()
-        // may return null for nested classes obtained from annotation arguments, causing a false
-        // "not resolvable" error before the type-check is ever reached.
-        if (dialogStyle.isAssignableFrom(ksStyleType)) {
-            // Fall back to the dialogStyle's own declaration when ksStyleType.declaration
-            // is a KSTypeParameter (null qualifiedName) — common with KSP 2.3+ for KClass args
+        // Check known styles BEFORE resolving importable — in KSP 2.3+ the KSType obtained
+        // from annotation KClass arguments may have a KSTypeParameter as declaration (null
+        // qualifiedName), so we must identify the style via isAssignableFrom first.
+        if (dialogStyleDecl.asType(emptyList()).isAssignableFrom(ksStyleType)) {
+            // Try to resolve the actual subclass importable; if KSP 2.3+ can't give us a
+            // KSClassDeclaration, fall back to the known Dialog declaration directly.
             val importable = ksStyleType.resolveImportable()
-                ?: dialogStyle.resolveImportable()
+                ?: dialogStyleDecl.toImportable()
                 ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Dialog(importable)
         }
 
-        if (animatedStyle != null && animatedStyle!!.isAssignableFrom(ksStyleType)) {
+        if (animatedStyleDecl != null && animatedStyleDecl!!.asType(emptyList()).isAssignableFrom(ksStyleType)) {
             val importable = ksStyleType.resolveImportable()
-                ?: animatedStyle!!.resolveImportable()
+                ?: animatedStyleDecl!!.toImportable()
                 ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Animated(importable, ksStyleType.declaration.findAllRequireOptInAnnotations())
         }
@@ -86,21 +86,27 @@ class DestinationMappingUtils (
         findActualClassDeclaration()?.toImportable()
             ?: declaration.qualifiedName?.let { Importable(declaration.simpleName.asString(), it.asString()) }
 
-    private val defaultStyle by lazy {
+    // Cache KSClassDeclarations directly so we can use toImportable() as a reliable fallback
+    // without going through KSType.declaration (which may be unreliable in KSP 2.3+).
+    private val defaultStyleDecl by lazy {
         resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.spec.DestinationStyle.Default")!!
-            .asType(emptyList())
     }
 
-    private val bottomSheetStyle by lazy {
-        resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.bottomsheet.spec.DestinationStyleBottomSheet")?.asType(emptyList())
+    private val bottomSheetStyleDecl by lazy {
+        resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.bottomsheet.spec.DestinationStyleBottomSheet")
     }
 
-    private val animatedStyle by lazy {
-        resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.spec.DestinationStyle.Animated")?.asType(emptyList())
+    private val animatedStyleDecl by lazy {
+        resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.spec.DestinationStyle.Animated")
     }
 
-    private val dialogStyle by lazy {
-        resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.spec.DestinationStyle.Dialog")!!.asType(emptyList())
+    private val dialogStyleDecl by lazy {
+        resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.spec.DestinationStyle.Dialog")!!
     }
+
+    // Keep KSType-based lazy vals for backwards-compat usage in the rest of the codebase
+    private val defaultStyle by lazy { defaultStyleDecl.asType(emptyList()) }
+    private val bottomSheetStyle by lazy { bottomSheetStyleDecl?.asType(emptyList()) }
+    private val animatedStyle by lazy { animatedStyleDecl?.asType(emptyList()) }
+    private val dialogStyle by lazy { dialogStyleDecl.asType(emptyList()) }
 }
-
