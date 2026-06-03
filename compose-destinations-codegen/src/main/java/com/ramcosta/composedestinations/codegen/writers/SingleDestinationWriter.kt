@@ -124,8 +124,9 @@ internal class SingleDestinationWriter(
             return replace(SUPERTYPE, CORE_DIRECTION_DESTINATION_SPEC)
         }
 
-        val superType = if (destination.destinationNavArgsClass != null) {
-            "${CORE_TYPED_DESTINATION_SPEC}<${destination.destinationNavArgsClass.type.getCodePlaceHolder()}>"
+        val destinationNavArgsClass = destination.destinationNavArgsClass
+        val superType = if (destinationNavArgsClass != null) {
+            "${CORE_TYPED_DESTINATION_SPEC}<${destinationNavArgsClass.type.getCodePlaceHolder()}>"
         } else {
             "${CORE_TYPED_DESTINATION_SPEC}<${destination.name}NavArgs>"
         }
@@ -186,6 +187,7 @@ internal class SingleDestinationWriter(
     }
 
     private fun activityDestinationFields(): String = with(destination) {
+        val activityDestinationParams = activityDestinationParams
         if (activityDestinationParams == null) {
             return ""
         }
@@ -249,15 +251,16 @@ internal class SingleDestinationWriter(
     }
 
     private fun destinationStyle(): String {
-        return when (destination.destinationStyleType) {
+        val destinationStyleType = destination.destinationStyleType
+        return when (destinationStyleType) {
             is DestinationStyleType.Activity,
             is DestinationStyleType.Default -> ""
 
             is DestinationStyleType.BottomSheet -> destinationStyleBottomSheet()
 
-            is DestinationStyleType.Animated -> destinationStyleAnimated(destination.destinationStyleType)
+            is DestinationStyleType.Animated -> destinationStyleAnimated(destinationStyleType)
 
-            is DestinationStyleType.Dialog -> destinationStyleDialog(destination.destinationStyleType)
+            is DestinationStyleType.Dialog -> destinationStyleDialog(destinationStyleType)
         }
     }
 

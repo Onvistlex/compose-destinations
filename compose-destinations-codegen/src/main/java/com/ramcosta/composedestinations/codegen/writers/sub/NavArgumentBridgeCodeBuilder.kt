@@ -360,6 +360,7 @@ class NavArgumentBridgeCodeBuilder(
             return navArgResolver.customNavTypeCode(this)
         }
 
+        val valueClassInnerInfo = valueClassInnerInfo
         if (valueClassInnerInfo != null) {
             return valueClassInnerInfo.typeInfo.toNavTypeCode()
         }
@@ -395,6 +396,7 @@ class NavArgumentBridgeCodeBuilder(
             return "${coreTypes[value]!!.getCodePlaceHolder()}.serializeValue($argumentReference)"
         }
 
+        val valueClassInnerInfo = valueClassInnerInfo
         if (valueClassInnerInfo != null) {
             return valueClassInnerInfo.typeInfo.stringifyForNavigation(
                 argumentName = argumentName,

@@ -5,7 +5,7 @@ compileSdk = "35"
 targetSdk = "35"
 compileSdkSampleApps = "36"
 
-kotlin = "2.2.20"
+kotlin = "2.3.21"
 dependencyCheckPluginVersion = "0.53.0"
 agp = "8.13.0"
 mavenPublishPluginVersion = "0.34.0"
@@ -16,7 +16,7 @@ activityCompose = "1.11.0"
 material = "1.13.0"
 lifecycleRuntimeKtx = "2.9.4"
 
-ksp = "2.2.20-2.0.2"
+ksp = "2.3.9"
 
 junit = "4.13.2"
 

@@ -184,14 +184,16 @@ internal class SingleNavGraphWriter(
             )
     }
 
-    private fun navHostDefaultStartArgsCode() =
-        if (navGraph.isNavHostGraph && navGraph.startRouteArgs != null && navGraph.defaultStartArgs != null) {
+    private fun navHostDefaultStartArgsCode(): String {
+        val startRouteArgs = navGraph.startRouteArgs
+        val defaultStartArgs = navGraph.defaultStartArgs
+        return if (navGraph.isNavHostGraph && startRouteArgs != null && defaultStartArgs != null) {
 
             """
             |
             |
-            |    override val defaultStartArgs: ${importableHelper.addAndGetPlaceholder(navGraph.startRouteArgs.type)} = ${importableHelper.addAndGetPlaceholder(navGraph.defaultStartArgs)}()
-            |    
+            |    override val defaultStartArgs: ${importableHelper.addAndGetPlaceholder(startRouteArgs.type)} = ${importableHelper.addAndGetPlaceholder(defaultStartArgs)}()
+            |
             |    override val defaultStartDirection: Direction = defaultStartDirection()
             """.trimMargin()
         } else if (navGraph.isNavHostGraph) {
@@ -203,6 +205,7 @@ internal class SingleNavGraphWriter(
         } else {
             ""
         }
+    }
 
     private fun RawNavGraphTree.navArgumentsCode(): String {
         val startRouteArguments = if (startRouteArgs != null) {

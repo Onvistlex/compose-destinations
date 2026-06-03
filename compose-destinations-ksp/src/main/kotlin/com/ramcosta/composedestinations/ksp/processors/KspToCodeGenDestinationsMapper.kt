@@ -4,7 +4,9 @@ import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSClassifierReference
 import com.google.devtools.ksp.symbol.KSType
+import com.ramcosta.composedestinations.codegen.facades.Logger
 import com.ramcosta.composedestinations.codegen.commons.ACTIVITY_DESTINATION_ANNOTATION
 import com.ramcosta.composedestinations.codegen.commons.ACTIVITY_DESTINATION_ANNOTATION_DEFAULT_NULL
 import com.ramcosta.composedestinations.codegen.commons.DESTINATION_ANNOTATION_DEEP_LINKS_ARGUMENT
@@ -93,13 +95,28 @@ internal class KspToCodeGenDestinationsMapper(
     private fun List<KSAnnotation>.getNavGraphInfo(
         errorLocationHint: String
     ): NavGraphInfo? {
-        return findOverridingArgumentValue {
+        val navGraphType = findOverridingArgumentValue {
             if (shortName.asString() == JAVA_ACTIVITY_DESTINATION_ANNOTATION) {
                 findArgumentValue<KSType>("navGraph")
             } else {
-                annotationType.resolve().arguments.firstOrNull()?.type?.resolve()
+                // KSP 2.3+ may not resolve type args via resolve().arguments for meta-annotations;
+                // try element-based access first (reads directly from the type reference)
+                val elementTypeArg = (annotationType.element as? KSClassifierReference)
+                    ?.typeArguments?.firstOrNull()?.type?.resolve()?.takeIf { !it.isError }
+                elementTypeArg ?: annotationType.resolve().arguments.firstOrNull()?.type?.resolve()
+                    ?.takeIf { !it.isError }
             }
-        }!!.toNavGraphParentInfo(
+        }
+
+        if (navGraphType == null) {
+            Logger.instance.warn(
+                "[compose-destinations] Could not determine nav graph type for $errorLocationHint. " +
+                "Annotation path: ${map { it.shortName.asString() }}. " +
+                "This destination will be EXCLUDED from NavGraphs generation!"
+            )
+        }
+
+        return navGraphType?.toNavGraphParentInfo(
             errorLocationHint = errorLocationHint,
             annotationType = "@Destination"
         )

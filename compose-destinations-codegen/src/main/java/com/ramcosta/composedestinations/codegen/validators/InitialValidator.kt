@@ -371,6 +371,7 @@ internal class InitialValidator(
     }
 
     private fun TypeInfo.isValueClassOfValidInnerNavArgType(): Boolean {
+        val valueClassInnerInfo = valueClassInnerInfo
         if (valueClassInnerInfo != null &&
             valueClassInnerInfo.isConstructorPublic &&
             valueClassInnerInfo.publicNonNullableField != null

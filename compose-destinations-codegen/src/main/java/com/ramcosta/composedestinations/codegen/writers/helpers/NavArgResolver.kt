@@ -56,6 +56,7 @@ class NavArgResolver(
         errorLocationPrefix: String,
         argName: String,
     ): String {
+        val valueClassInnerInfo = valueClassInnerInfo
         return when {
             value in coreTypes.keys -> "${coreTypes[value]!!.simpleName}.get(savedStateHandle, \"$argName\")"
             isCustomTypeNavArg() -> "${customNavTypeCode(this)}.get(savedStateHandle, \"$argName\")"
@@ -71,6 +72,7 @@ class NavArgResolver(
         argName: String,
         valueClassSuffix: String = ""
     ): String {
+        val valueClassInnerInfo = valueClassInnerInfo
         return when {
             value in coreTypes.keys -> "${coreTypes[value]!!.simpleName}.put(handle, \"$argName\", $argName$valueClassSuffix)"
             isCustomTypeNavArg() -> "${customNavTypeCode(this)}.put(handle, \"$argName\", $argName$valueClassSuffix)"
@@ -88,6 +90,7 @@ class NavArgResolver(
         errorLocationPrefix: String,
         argName: String,
     ): String {
+        val valueClassInnerInfo = valueClassInnerInfo
         return when {
             value in coreTypes.keys -> "${coreTypes[value]!!.simpleName}.safeGet(bundle, \"$argName\")"
             isCustomTypeNavArg() -> "${customNavTypeCode(this)}.safeGet(bundle, \"$argName\")"
