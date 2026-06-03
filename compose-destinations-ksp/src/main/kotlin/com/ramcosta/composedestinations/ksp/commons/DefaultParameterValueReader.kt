@@ -43,6 +43,9 @@ object DefaultParameterValueReader {
         var index: Int
         anchors.forEach {
             index = auxText.indexOf(it)
+            // KSP 2.3+ may resolve function types to "Function0/1/..." while the source uses
+            // "() -> Unit" syntax — indexOf returns -1 in that case, so skip the anchor safely
+            if (index == -1) return@forEach
             auxText = auxText.removeRange(0, index)
         }
         auxText = auxText.removeRange(0, 1)
