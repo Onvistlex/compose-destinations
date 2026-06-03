@@ -47,27 +47,26 @@ class DestinationMappingUtils (
             }
         }
 
-        if (defaultStyleDecl.asType(emptyList()).isAssignableFrom(ksStyleType)) {
+        if (defaultStyle.isAssignableFrom(ksStyleType)) {
             return DestinationStyleType.Default
         }
 
-        if (bottomSheetStyleDecl != null && bottomSheetStyleDecl!!.asType(emptyList()).isAssignableFrom(ksStyleType)) {
+        if (bottomSheetStyle != null && bottomSheetStyle!!.isAssignableFrom(ksStyleType)) {
             return DestinationStyleType.BottomSheet
         }
 
-        // Check known styles BEFORE resolving importable — in KSP 2.3+ the KSType obtained
-        // from annotation KClass arguments may have a KSTypeParameter as declaration (null
-        // qualifiedName), so we must identify the style via isAssignableFrom first.
-        if (dialogStyleDecl.asType(emptyList()).isAssignableFrom(ksStyleType)) {
-            // Try to resolve the actual subclass importable; if KSP 2.3+ can't give us a
-            // KSClassDeclaration, fall back to the known Dialog declaration directly.
+        // Use the cached KSType instances for isAssignableFrom — in KSP 2.3+ creating a fresh
+        // KSType via asType() each call breaks isAssignableFrom for annotation KClass arguments.
+        // Use cached KSClassDeclaration for the importable fallback since KSType.declaration
+        // may be a KSTypeParameter (null qualifiedName) for those same arguments.
+        if (dialogStyle.isAssignableFrom(ksStyleType)) {
             val importable = ksStyleType.resolveImportable()
                 ?: dialogStyleDecl.toImportable()
                 ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Dialog(importable)
         }
 
-        if (animatedStyleDecl != null && animatedStyleDecl!!.asType(emptyList()).isAssignableFrom(ksStyleType)) {
+        if (animatedStyle != null && animatedStyle!!.isAssignableFrom(ksStyleType)) {
             val importable = ksStyleType.resolveImportable()
                 ?: animatedStyleDecl!!.toImportable()
                 ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
