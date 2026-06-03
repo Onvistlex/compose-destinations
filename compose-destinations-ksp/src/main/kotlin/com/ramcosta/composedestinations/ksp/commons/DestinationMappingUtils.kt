@@ -59,13 +59,17 @@ class DestinationMappingUtils (
         // may return null for nested classes obtained from annotation arguments, causing a false
         // "not resolvable" error before the type-check is ever reached.
         if (dialogStyle.isAssignableFrom(ksStyleType)) {
+            // Fall back to the dialogStyle's own declaration when ksStyleType.declaration
+            // is a KSTypeParameter (null qualifiedName) — common with KSP 2.3+ for KClass args
             val importable = ksStyleType.resolveImportable()
+                ?: dialogStyle.resolveImportable()
                 ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Dialog(importable)
         }
 
         if (animatedStyle != null && animatedStyle!!.isAssignableFrom(ksStyleType)) {
             val importable = ksStyleType.resolveImportable()
+                ?: animatedStyle!!.resolveImportable()
                 ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Animated(importable, ksStyleType.declaration.findAllRequireOptInAnnotations())
         }
