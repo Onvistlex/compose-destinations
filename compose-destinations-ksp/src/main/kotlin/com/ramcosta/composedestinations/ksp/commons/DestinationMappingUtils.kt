@@ -55,19 +55,32 @@ class DestinationMappingUtils (
             return DestinationStyleType.BottomSheet
         }
 
-        val importable = ksStyleType.findActualClassDeclaration()?.toImportable()
-            ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
-
+        // Check known styles before resolving importable — in KSP 2.3+ findActualClassDeclaration()
+        // may return null for nested classes obtained from annotation arguments, causing a false
+        // "not resolvable" error before the type-check is ever reached.
         if (dialogStyle.isAssignableFrom(ksStyleType)) {
+            val importable = ksStyleType.resolveImportable()
+                ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Dialog(importable)
         }
 
         if (animatedStyle != null && animatedStyle!!.isAssignableFrom(ksStyleType)) {
+            val importable = ksStyleType.resolveImportable()
+                ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
             return DestinationStyleType.Animated(importable, ksStyleType.declaration.findAllRequireOptInAnnotations())
         }
 
+        val importable = ksStyleType.resolveImportable()
+            ?: throw IllegalDestinationsSetup("Parameter $DESTINATION_ANNOTATION_STYLE_ARGUMENT of Destination annotation in $locationError was not resolvable: please review it.")
+
         throw IllegalDestinationsSetup("Unknown style used on $locationError. Please recheck it.")
     }
+
+    // KSP 2.3+ may not return a KSClassDeclaration from findActualClassDeclaration() for
+    // nested classes obtained from annotation KClass arguments — fall back to declaration directly.
+    private fun KSType.resolveImportable(): Importable? =
+        findActualClassDeclaration()?.toImportable()
+            ?: declaration.qualifiedName?.let { Importable(declaration.simpleName.asString(), it.asString()) }
 
     private val defaultStyle by lazy {
         resolver.getClassDeclarationByName("$CORE_PACKAGE_NAME.spec.DestinationStyle.Default")!!
