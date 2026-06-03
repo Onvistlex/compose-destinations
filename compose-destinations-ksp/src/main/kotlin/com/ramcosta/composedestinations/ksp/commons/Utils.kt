@@ -168,9 +168,9 @@ val KSClassDeclaration.isNothing get() =
 
 fun KSAnnotation.toDeepLink(): DeepLink {
     return DeepLink(
-        findArgumentValue("action")!!,
-        findArgumentValue("mimeType")!!,
-        findArgumentValue("uriPattern")!!,
+        findArgumentValue("action") ?: "",
+        findArgumentValue("mimeType") ?: "",
+        findArgumentValue("uriPattern") ?: "",
     )
 }
 
