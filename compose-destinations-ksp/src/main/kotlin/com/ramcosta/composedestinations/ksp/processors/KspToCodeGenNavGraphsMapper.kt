@@ -25,6 +25,7 @@ import com.ramcosta.composedestinations.ksp.commons.findArgumentValue
 import com.ramcosta.composedestinations.ksp.commons.getNavArgsDelegateType
 import com.ramcosta.composedestinations.ksp.commons.isNothing
 import com.ramcosta.composedestinations.ksp.commons.toDeepLink
+import com.ramcosta.composedestinations.codegen.model.Visibility
 import com.ramcosta.composedestinations.ksp.commons.toGenVisibility
 import com.ramcosta.composedestinations.ksp.commons.toImportable
 import com.ramcosta.composedestinations.ksp.commons.toNavGraphParentInfo
@@ -71,8 +72,8 @@ internal class KspToCodeGenNavGraphsMapper(
         val navGraphAnnotationNameArg = navGraphAnnotation
             .findArgumentValue<String>(DESTINATION_ANNOTATION_ROUTE_ARGUMENT)
         val navGraphVisibility = navGraphAnnotation
-            .findArgumentValue<Any>("visibility")!!
-            .toGenVisibility()
+            .findArgumentValue<Any>("visibility")
+            ?.toGenVisibility() ?: Visibility.PUBLIC
         val navGraphDefaultTransitions = navGraphAnnotation
             .findArgumentValue<KSType>("defaultTransitions")
             ?.findActualClassDeclaration()
@@ -117,7 +118,7 @@ internal class KspToCodeGenNavGraphsMapper(
         }
 
         val isParentStart = if (parent != null) {
-            navGraphAnnotation.findArgumentValue<Boolean>("start")!!
+            navGraphAnnotation.findArgumentValue<Boolean>("start") ?: false
         } else {
             null
         }
@@ -175,7 +176,7 @@ internal class KspToCodeGenNavGraphsMapper(
             .annotations.first { it.shortName.asString() == "GeneratedCodeExternalDestinations" }
             .findArgumentValue<ArrayList<KSType>>("destinations")!!
 
-        val overridingByDestinationType: Map<KSType, KSAnnotation> = findArgumentValue<ArrayList<KSAnnotation>>("overriding")!!
+        val overridingByDestinationType: Map<KSType, KSAnnotation> = (findArgumentValue<ArrayList<KSAnnotation>>("overriding") ?: arrayListOf())
             .associate {
                 it.findArgumentValue<KSType>("destination")!! to it.findArgumentValue<KSAnnotation>("with")!!
             }
@@ -262,7 +263,7 @@ internal class KspToCodeGenNavGraphsMapper(
 
         return ExternalRoute.NavGraph(
             superType = superType.toType(location, resolver, navTypeSerializersByType)!!,
-            isStart = findArgumentValue<Boolean>("start")!!,
+            isStart = findArgumentValue<Boolean>("start") ?: false,
             generatedType = importable,
             navArgs = navArgs,
             requireOptInAnnotationTypes = graphType.declaration.findAllRequireOptInAnnotations(),
